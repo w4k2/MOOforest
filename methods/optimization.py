@@ -39,15 +39,15 @@ class Optimization(ElementwiseProblem):
             else:
                 feature = False
                 selected_features.append(feature)
-        # Wielkość wektora to f x n_clf, np. 7 * 15 = 105
+        # The size of vector is f X n_clf, 7*15=105
         # print(len(selected_features))
 
         cross_validation = RepeatedStratifiedKFold(n_splits=2, n_repeats=5, random_state=111)
-        # Podział pełnego wektora cech na tablicę zawierającą n_clf arrays, gdzie każda array jest dla oddzielnego modelu
+        # Splitting the full feature vector into an array containing n_clf arrays, where each array is for a separate model
         selected_features = np.array_split(selected_features, self.n_classifiers)
         metrics_folds = []
         for fold_id, (train, test) in enumerate(cross_validation.split(self.X, self.y)):
-            # Tu musi być wyzerowany ensemble, żeby liczba modeli w nim zawsze była taka jak podajemy na początku, np. 15
+            # Ensemble must be reset here so that the number of models in it is always the same as stated at the beginning, e.g. 15
             ensemble = []
             for sf in selected_features:
                 # If at least one element in sf is True
@@ -67,7 +67,7 @@ class Optimization(ElementwiseProblem):
                     metrics = [0, 0]
                     return metrics
             y_pred = self.predict(X_test, selected_features, ensemble)
-            metrics = [precision_score(y_test, y_pred, average="weighted"), recall_score(y_test, y_pred, average="weighted")]
+            metrics = [precision_score(y_test, y_pred), recall_score(y_test, y_pred)]
             metrics_folds.append(metrics)
         mean_score = np.mean(metrics_folds, axis=0)
         std = np.std(metrics_folds, axis=0)

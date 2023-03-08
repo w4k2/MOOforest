@@ -7,7 +7,7 @@ from sklearn.ensemble import RandomForestClassifier
 from methods.MOOforest import MOOforest
 # from methods.Random_FS import RandomFS
 from utils.wilcoxon_ranking import pairs_metrics_multi_grid_all, pairs_metrics_multi_line
-from utils.plots import result_tables, result_tables_for_time, result_tables_IR, result_tables_features, scatter_plot
+from utils.plots import result_tables, result_tables_for_time, result_tables_IR, result_tables_features, scatter_plot, scatter_plot_closer, result_tables_IR_precision_recall
 from utils.datasets_table_description import make_description_table
 from utils.load_datasets import load_dataset
 from utils.datasets_table_description import calc_imbalance_ratio
@@ -24,10 +24,10 @@ methods = {
         MOOforest(base_classifier=base_estimator, n_classifiers=15, n_gen=200, pareto_decision="promethee" ,criteria_weights=np.array([0.5, 0.5])),
     "DT":
         DecisionTreeClassifier(random_state=1234),
-    "RF":
-        RandomForestClassifier(n_estimators=15, bootstrap=False, random_state=1234),
-    "RF_b":
-        RandomForestClassifier(n_estimators=15, bootstrap=True, random_state=1234),
+    # "RF":
+    #     RandomForestClassifier(n_estimators=15, bootstrap=False, random_state=1234),
+    # "RF_b":
+    #     RandomForestClassifier(n_estimators=15, bootstrap=True, random_state=1234),
 
     "DE_Forest":
         base_estimator,
@@ -117,8 +117,7 @@ for dataset_id, dataset_path in enumerate(dataset_paths):
         #     print("Error loading time data!", dataset_name, clf_name)
 
 # All datasets with description in the table
-# wewnątrz tej funkcji jest trochę źle zrobiony folder
-make_description_table(DATASETS_DIR)
+# make_description_table(DATASETS_DIR)
 
 experiment_name = "experiment1"
 # Results in form of one .tex table of each metric
@@ -127,16 +126,22 @@ experiment_name = "experiment1"
 # Results in form of one .tex table of each metric sorted by IR
 # result_tables_IR(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
 
+# Results in form of one .tex table of metrics Precision and Recall sorted by IR
+# result_tables_IR_precision_recall(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
+
 # Results in form of one .tex table of each metric sorted by number of features
 # result_tables_features(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
 
 # Wilcoxon ranking line - statistic test for my method vs the remaining methods
-# pairs_metrics_multi_line(method_names=list(method_names), data_np=data_np, experiment_name=experiment_name, dataset_paths=dataset_paths, metrics=metrics_alias, filename="ex1_wilcoxon", ref_methods=list(method_names))
+pairs_metrics_multi_line(method_names=list(method_names), data_np=data_np, experiment_name=experiment_name, dataset_paths=dataset_paths, metrics=metrics_alias, filename="ex1_wilcoxon", ref_methods=list(method_names))
 
 # Time results in form of .tex table
 # result_tables_for_time(dataset_names, imbalance_ratios, sum_times, methods, experiment_name)
 
 # Plot scatter with all methods
 # scatter_plot(datasets=dataset_names, n_folds=n_folds, experiment_name=experiment_name, methods=methods, raw_data=data_np)
+
+# Plot scatter with all methods fo only one dataset
+# scatter_plot_closer(datasets=dataset_names, n_folds=n_folds, experiment_name=experiment_name, methods=methods, raw_data=data_np)
 
 # Results from 13_02_23 are the final results

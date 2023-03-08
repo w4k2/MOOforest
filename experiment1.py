@@ -31,18 +31,10 @@ Datasets are from KEEL repository.
 
 base_estimator = DecisionTreeClassifier(random_state=1234)
 methods = {
-    "MOOforest_promethee":
+    "MOOforest":
         MOOforest(base_classifier=base_estimator, n_classifiers=15, n_gen=200, pareto_decision="promethee" ,criteria_weights=np.array([0.5, 0.5])),
-    "MOOforest_recall":
-        MOOforest(base_classifier=base_estimator, n_classifiers=15, n_gen=200, pareto_decision="recall"),
-    "MOOforest_precision":
-        MOOforest(base_classifier=base_estimator, n_classifiers=15, n_gen=200, pareto_decision="precision"),
     "DT":
         DecisionTreeClassifier(random_state=1234),
-    "RF":
-        RandomForestClassifier(n_estimators=15, bootstrap=False, random_state=1234),
-    "RF_b":
-        RandomForestClassifier(n_estimators=15, bootstrap=True, random_state=1234),
 }
 
 # Repeated Stratified K-Fold cross validator
@@ -121,13 +113,6 @@ def compute(dataset_id, dataset_path):
                     else:
                         scores[metric_id, clf_id, fold_id] = metric(y_test, y_pred)
 
-                # # Diversity
-                # calculate_diversity = getattr(clf, "calculate_diversity", None)
-                # if callable(calculate_diversity):
-                #     diversity[clf_id, fold_id] = clf.calculate_diversity()
-                # else:
-                #     diversity[clf_id, fold_id] = None
-
                 end_method = time.time() - start_method
                 logging.info("DONE METHOD %s - %s fold: %d (Time: %f [s])" % (clf_name, dataset_path, fold_id, end_method))
                 print("DONE METHOD %s - %s fold: %d (Time: %.2f [s])" % (clf_name, dataset_path, fold_id, end_method))
@@ -148,11 +133,6 @@ def compute(dataset_id, dataset_path):
                 if not os.path.exists("results/experiment1/raw_results/%s/%s/" % (metric, dataset_name)):
                     os.makedirs("results/experiment1/raw_results/%s/%s/" % (metric, dataset_name))
                 np.savetxt(fname=filename, fmt="%f", X=scores[metric_id, clf_id, :])
-            # # Save diversity results
-            # filename = "results/experiment1/diversity_results/%s/%s_diversity.csv" % (dataset_name, clf_name)
-            # if not os.path.exists("results/experiment1/diversity_results/%s/" % (dataset_name)):
-            #     os.makedirs("results/experiment1/diversity_results/%s/" % (dataset_name))
-            # np.savetxt(fname=filename, fmt="%f", X=diversity[clf_id, :, :])
             # Save time
             filename = "results/experiment1/time_results/%s/%s_time.csv" % (dataset_name, clf_name)
             if not os.path.exists("results/experiment1/time_results/%s/" % (dataset_name)):

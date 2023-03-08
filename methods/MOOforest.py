@@ -31,7 +31,7 @@ class MOOforest(BaseEstimator):
         # Create optimization problem
         problem = Optimization(X, y, estimator=self.base_classifier, n_classifiers=self.n_classifiers, n_features=n_features)
         
-        # 2 - oznacza liczbę M, czyli liczba kryteriów
+        # 2 - means M, criterion number
         ref_dirs = get_reference_directions("das-dennis", 2, n_partitions=50)
         algorithm = MOEAD(
             ref_dirs=ref_dirs,
@@ -45,7 +45,7 @@ class MOOforest(BaseEstimator):
                        seed=1,
                        save_history=True,
                        verbose=False)
-        # Wyjście jeśli verbose=True: 
+        # Output if verbose=True: 
         # n_gen - The current number of generations or iterations until this point.
         # n_eval - The number of function evaluations so far.
         # n_nds - For multi-objective problems, the number of non-dominated solutions of the optima found.
@@ -55,7 +55,7 @@ class MOOforest(BaseEstimator):
         # F returns all Pareto front solutions (quality) in form [-precision, -recall]
         self.solutions = res.F        
 
-        # Wybór jednego rozwiązania z Pareto Frontu:
+        # Choose one solution from Pareto Front:
         features_for_ensemble = []
         if self.pareto_decision == 'recall':
             index = np.argmin(self.solutions[:, 1], axis=0)
@@ -86,33 +86,13 @@ class MOOforest(BaseEstimator):
             else:
                 feature = False
                 sf_ensemble_binary.append(feature)
-        # Podział wektora cech o rozmiarze f x n, na tablicę 2-wymiarową zawierająca osobne wektory dla każdego ensembla
+        # Division of the feature vector of size f x n into a 2-dimensional array containing separate vectors for each ensemble
         self.selected_features = np.array_split(sf_ensemble_binary, self.n_classifiers)
 
         for sf_model in self.selected_features:
             candidate = clone(self.base_classifier).fit(X[:, sf_model], y)
             # Add candidate to the ensemble
             self.ensemble.append(candidate)
-
-        # Pruning based on balanced_accuracy_score
-        # if self.pruning:
-        #     bac_array = []
-        #     for sf, clf in zip(self.selected_features, self.ensemble):
-        #         y_pred = clf.predict(X[:, sf])
-        #         bac = balanced_accuracy_score(y, y_pred)
-        #         bac_array.append(bac)
-        #     bac_arg_sorted = np.argsort(bac_array)
-        #     self.ensemble_arr = np.array(self.ensemble)
-        #     # The percent of deleted models, ex. 0.3 from 10 models = 30 % models will be deleted
-        #     pruned = 0.3
-        #     pruned_indx = int(pruned * len(self.ensemble))
-        #     selected_models = bac_arg_sorted[pruned_indx:]
-        #     self.ensemble_arr = self.ensemble_arr[selected_models]
-        #     self.ensemble = self.ensemble_arr.tolist()
-
-        #     selected_features_list = [sf.tolist() for sf in self.selected_features]
-        #     selected_features_arr = np.array(selected_features_list)
-        #     self.selected_features = selected_features_arr[selected_models, :]
 
         return self
 
@@ -139,22 +119,6 @@ class MOOforest(BaseEstimator):
     def predict_proba(self, X):
         probas_ = [clf.predict_proba(X) for clf in self.ensemble]
         return np.average(probas_, axis=0)
-
-    # def calculate_diversity(self):
-    #     '''
-    #     entropy_measure_e: E varies between 0 and 1, where 0 indicates no difference and 1 indicates the highest possible diversity.
-    #     kw - Kohavi-Wolpert variance
-    #     Q-statistic: <-1, 1>
-    #     Q = 0 statistically independent classifiers
-    #     Q < 0 classifiers commit errors on different objects
-    #     Q > 0 classifiers recognize the same objects correctly
-    #     '''
-    #     if len(self.ensemble) > 1:
-    #         # All measures for whole ensemble
-    #         self.entropy_measure_e, self.k0, self.kw, self.disagreement_measure, self.q_statistic_mean = calc_diversity_measures(self.X, self.y, self.ensemble, self.selected_features, p=0.01)
-
-    #         return(self.entropy_measure_e, self.kw, self.disagreement_measure, self.q_statistic_mean)
-
 
     # Calculation uni weighted to promethee method
 def uni_cal(solutions_col, criteria_min_max, preference_function, criteria_weights):

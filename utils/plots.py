@@ -5,6 +5,71 @@ from .load_datasets import load_dataset
 from .datasets_table_description import calc_imbalance_ratio
 
 
+
+def result_tables_IR_precision_recall(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name):
+    imbalance_ratios = []
+    for dataset_path in dataset_paths:
+        X, y = load_dataset(dataset_path)
+        IR = calc_imbalance_ratio(X, y)
+        imbalance_ratios.append(IR)
+    IR_argsorted = np.argsort(imbalance_ratios)
+    for metric_id, metric in enumerate(metrics_alias):
+        if not os.path.exists("results/%s/tables_IR_prrec/" % experiment_name):
+            os.makedirs("results/%s/tables_IR_prrec/" % experiment_name)
+        with open("results/%s/tables_IR_prrec/results_%s.tex" % (experiment_name, experiment_name), "w+") as file:
+            print("\\begin{table}[!ht]", file=file)
+            print("\\centering", file=file)
+            print("\\caption{Precision and Recall}", file=file)
+            columns = ""
+            for i in methods:
+                columns += " c|"
+            columns = columns[:-1]
+            print("\\scalebox{0.4}{", file=file)
+            print("\\begin{tabular}{V{3}rV{3}%sV{3}%sV{3}}" % (columns, columns), file=file)
+            print("\\hlineB{3}", file=file)
+            first_row = " & \multicolumn{%d}{cV{3}}{\\textbf{Recall}} & \multicolumn{%d}{cV{3}}{\\textbf{Precision}} \\\\" % (len(methods), len(methods))
+            print(first_row, file=file)
+            print("\\hline", file=file)
+            columns_names = "\\textbf{ID} &"
+            for name in methods:
+                name = name.replace("_", "-")
+                columns_names += f'\\textbf{{{name}}} & '
+            for name in methods:
+                name = name.replace("_", "-")
+                columns_names += f'\\textbf{{{name}}} & '
+            columns_names = columns_names[:-3]
+            columns_names += "\\\\"
+            print(columns_names, file=file)
+            print("\\hline", file=file)
+            for id, arg in enumerate(IR_argsorted):
+                id += 1
+                line = "\\textbf{%d}" % (id)
+                # lineir = "$%s$" % (dataset_paths[arg])
+                # print(line, lineir)
+                line_values_recall = []
+                line_values_recall = mean_scores[arg, 3, :]
+                max_value_recall = np.amax(line_values_recall)
+                line_values_precision = []
+                line_values_precision = mean_scores[arg, 4, :]
+                max_value_precision = np.amax(line_values_precision)
+                for clf_id, clf_name in enumerate(methods):
+                    if mean_scores[arg, 3, clf_id] == max_value_recall:
+                        line += " & \\textbf{%0.3f $\\pm$ %0.3f}" % (mean_scores[arg, 3, clf_id], stds[arg, 3, clf_id])
+                    else:
+                        line += " & %0.3f $\\pm$ %0.3f" % (mean_scores[arg, 3, clf_id], stds[arg, 3, clf_id])
+
+                    if mean_scores[arg, 4, clf_id] == max_value_precision:
+                        line += " & \\textbf{%0.3f $\\pm$ %0.3f}" % (mean_scores[arg, 4, clf_id], stds[arg, 4, clf_id])
+                    else:
+                        line += " & %0.3f $\\pm$ %0.3f" % (mean_scores[arg, 4, clf_id], stds[arg, 4, clf_id])
+                line += " \\\\"
+                print(line, file=file)
+            print("\\hlineB{3}", file=file)
+            print("\\end{tabular}}", file=file)
+            print("\\end{table}", file=file)
+
+
+
 def result_tables_IR(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name):
     imbalance_ratios = []
     for dataset_path in dataset_paths:
@@ -181,8 +246,6 @@ def scatter_plot(datasets, n_folds, experiment_name, methods, raw_data):
         print(dataset)
         for fold_id in range(n_folds):
             solutions_moo = []
-            # solutions_semoosb = []
-            # solutions_semoosbp = []
             for sol_id in range(n_rows_p):
                 try:
                     filename_pareto_semoos = "results/%s/pareto_raw/%s/MOOforest/fold%d/sol%d.csv" % (experiment_name, dataset, fold_id, sol_id)
@@ -193,24 +256,6 @@ def scatter_plot(datasets, n_folds, experiment_name, methods, raw_data):
                     solutions_moo.append(solution_moo)
                 except IOError:
                     pass
-                # try:
-                #     filename_pareto_semoosb = "results/%s/pareto_raw/%s/MooEnsembleSVCbootstrap/fold%d/sol%d.csv" % (experiment_name, dataset, fold_id, sol_id)
-                #     solution_semoosb = np.genfromtxt(filename_pareto_semoosb, dtype=np.float32)
-                #     solution_semoosb = solution_semoosb.tolist()
-                #     solution_semoosb[0] = solution_semoosb[0] * (-1)
-                #     solution_semoosb[1] = solution_semoosb[1] * (-1)
-                #     solutions_semoosb.append(solution_semoosb)
-                # except IOError:
-                #     pass
-                # try:
-                #     filename_pareto_semoosbp = "results/%s/pareto_raw/%s/MooEnsembleSVCbootstrapPruned/fold%d/sol%d.csv" % (experiment_name, dataset, fold_id, sol_id)
-                #     solution_semoosbp = np.genfromtxt(filename_pareto_semoosbp, dtype=np.float32)
-                #     solution_semoosbp = solution_semoosbp.tolist()
-                #     solution_semoosbp[0] = solution_semoosbp[0] * (-1)
-                #     solution_semoosbp[1] = solution_semoosbp[1] * (-1)
-                #     solutions_semoosbp.append(solution_semoosbp)
-                # except IOError:
-                #     pass
             if solutions_moo:
             #  and solutions_semoosb and solutions_semoosbp:
                 filename_pareto_chart = "results/%s/scatter_plots/%s/scatter_%s_fold%d" % (experiment_name, dataset, dataset, fold_id)
@@ -224,21 +269,6 @@ def scatter_plot(datasets, n_folds, experiment_name, methods, raw_data):
                     moo_y.append(solution[1])
                 moo_x = np.array(moo_x)
                 moo_y = np.array(moo_y)
-                # semoosb_x = []
-                # semoosb_y = []
-                # for solution in solutions_semoosb:
-                #     semoosb_x.append(solution[0])
-                #     semoosb_y.append(solution[1])
-                # semoosb_x = np.array(semoosb_x)
-                # semoosb_y = np.array(semoosb_y)
-                # semoosbp_x = []
-                # semoosbp_y = []
-                # for solution in solutions_semoosbp:
-                #     semoosbp_x.append(solution[0])
-                #     semoosbp_y.append(solution[1])
-                # semoosbp_x = np.array(semoosbp_x)
-                # semoosbp_y = np.array(semoosbp_y)
-
                 plt.grid(True, color="silver", linestyle=":", axis='both')
 
                 # MOOforest pareto
@@ -248,18 +278,6 @@ def scatter_plot(datasets, n_folds, experiment_name, methods, raw_data):
                 # Recall
                 moo_recall = raw_data[dataset_id, 3, 0, fold_id]
                 plt.scatter(moo_precision, moo_recall, color='black', marker="o", label="MOOforest")
-                # # SEMOOSb pareto
-                # plt.scatter(semoosb_x, semoosb_y, color='tab:cyan', marker="x", label="SEMOOSb PF")
-                # # SEMOOSb one
-                # semoosb_p = raw_data[dataset_id, 6, 1, fold_id]
-                # semoosb_r = raw_data[dataset_id, 4, 1, fold_id]
-                # plt.scatter(semoosb_p, semoosb_r, color='darkslategray', marker="X", label="SEMOOSb")
-                # # # SEMOOSbp pareto
-                # plt.scatter(semoosbp_x, semoosbp_y, color='peachpuff', marker="+", label="SEMOOSbp PF")
-                # # SEMOOSbp one
-                # semoosbp_p = raw_data[dataset_id, 6, 2, fold_id]
-                # semoosbp_r = raw_data[dataset_id, 4, 2, fold_id]
-                # plt.scatter(semoosbp_p, semoosbp_r, color='peru', marker="P", label="SEMOOSbp")
 
                 # DT
                 plt.scatter(raw_data[dataset_id, 4, 1, fold_id], raw_data[dataset_id, 3, 1, fold_id], color='tab:pink', marker=">", label="DT")
@@ -279,6 +297,71 @@ def scatter_plot(datasets, n_folds, experiment_name, methods, raw_data):
                 plt.ylabel('Recall', fontsize=12)
                 plt.xlim([0, 1.1])
                 plt.ylim([0, 1.1])
+                plt.legend(loc="best")
+                plt.gcf().set_size_inches(9, 6)
+                plt.savefig(filename_pareto_chart+".png", bbox_inches='tight')
+                plt.savefig(filename_pareto_chart+".eps", format='eps', bbox_inches='tight')
+                plt.clf()
+                plt.close()
+
+
+# Plot scatter of pareto front solutions and all methods
+def scatter_plot_closer(datasets, n_folds, experiment_name, methods, raw_data):
+    n_rows_p = 1000
+    for dataset_id, dataset in enumerate(datasets):
+        print(dataset)
+        for fold_id in range(n_folds):
+            solutions_moo = []
+            for sol_id in range(n_rows_p):
+                try:
+                    filename_pareto_semoos = "results/%s/pareto_raw/%s/MOOforest/fold%d/sol%d.csv" % (experiment_name, dataset, fold_id, sol_id)
+                    solution_moo = np.genfromtxt(filename_pareto_semoos, dtype=np.float32)
+                    solution_moo = solution_moo.tolist()
+                    solution_moo[0] = solution_moo[0] * (-1)
+                    solution_moo[1] = solution_moo[1] * (-1)
+                    solutions_moo.append(solution_moo)
+                except IOError:
+                    pass
+            if solutions_moo:
+                filename_pareto_chart = "results/%s/scatter_plots_closer/%s/scatter_%s_fold%d" % (experiment_name, dataset, dataset, fold_id)
+                if not os.path.exists("results/%s/scatter_plots_closer/%s/" % (experiment_name, dataset)):
+                    os.makedirs("results/%s/scatter_plots_closer/%s/" % (experiment_name, dataset))
+
+                moo_x = []
+                moo_y = []
+                for solution in solutions_moo:
+                    moo_x.append(solution[0])
+                    moo_y.append(solution[1])
+                moo_x = np.array(moo_x)
+                moo_y = np.array(moo_y)
+
+                plt.grid(True, color="silver", linestyle=":", axis='both')
+
+                # MOOforest pareto
+                plt.scatter(moo_x, moo_y, color='darkgray', marker="o", label="MOOforest PF")
+                # Precision
+                moo_precision = raw_data[dataset_id, 4, 0, fold_id]
+                # Recall
+                moo_recall = raw_data[dataset_id, 3, 0, fold_id]
+                plt.scatter(moo_precision, moo_recall, color='black', marker="o", label="MOOforest")
+
+                # DT
+                plt.scatter(raw_data[dataset_id, 4, 1, fold_id], raw_data[dataset_id, 3, 1, fold_id], color='tab:pink', marker=">", label="DT")
+                # RF
+                plt.scatter(raw_data[dataset_id, 4, 2, fold_id], raw_data[dataset_id, 3, 2, fold_id], color='tab:blue', marker="v", label="RF")
+                # RF_b
+                plt.scatter(raw_data[dataset_id, 4, 3, fold_id], raw_data[dataset_id, 3, 3, fold_id], color='tab:orange', marker="v", label="RF_b")
+                # DE_Forest
+                plt.scatter(raw_data[dataset_id, 4, 4, fold_id], raw_data[dataset_id, 3, 4, fold_id], color='tab:blue', marker="+", label="DE_Forest")
+                # RandomFS
+                plt.scatter(raw_data[dataset_id, 4, 5, fold_id], raw_data[dataset_id, 3, 5, fold_id], color='tab:red', marker="^", label="RandomFS")
+                # RandomFS_b
+                plt.scatter(raw_data[dataset_id, 4, 6, fold_id], raw_data[dataset_id, 3, 6, fold_id], color='tab:purple', marker="<", label="RandomFS_b")
+
+                plt.xlabel('Precision', fontsize=12)
+                plt.ylabel('Recall', fontsize=12)
+                # plt.xlim([0, 1.1])
+                # plt.ylim([0, 1.1])
                 plt.legend(loc="best")
                 plt.gcf().set_size_inches(9, 6)
                 plt.savefig(filename_pareto_chart+".png", bbox_inches='tight')

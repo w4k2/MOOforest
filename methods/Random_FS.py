@@ -11,7 +11,7 @@ from utils.utils_diversity import calc_diversity_measures
 
 
 """
-Metoda wybiera cechy losowo - nowo zaimplementowany Random Forest, oryginalnie z artykułu (w sklearn jest inna implementacja)
+The method selects features randomly - newly implemented Random Forest, originally from the article (there is another implementation in sklearn)
 """
 
 
