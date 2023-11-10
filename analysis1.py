@@ -124,7 +124,7 @@ experiment_name = "experiment1"
 # result_tables(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
 
 # Results in form of one .tex table of each metric sorted by IR
-# result_tables_IR(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
+result_tables_IR(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
 
 # Results in form of one .tex table of metrics Precision and Recall sorted by IR
 # result_tables_IR_precision_recall(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
@@ -133,7 +133,7 @@ experiment_name = "experiment1"
 # result_tables_features(dataset_paths, metrics_alias, mean_scores, methods, stds, experiment_name)
 
 # Wilcoxon ranking line - statistic test for my method vs the remaining methods
-pairs_metrics_multi_line(method_names=list(method_names), data_np=data_np, experiment_name=experiment_name, dataset_paths=dataset_paths, metrics=metrics_alias, filename="ex1_wilcoxon", ref_methods=list(method_names))
+# pairs_metrics_multi_line(method_names=list(method_names), data_np=data_np, experiment_name=experiment_name, dataset_paths=dataset_paths, metrics=metrics_alias, filename="ex1_wilcoxon", ref_methods=list(method_names))
 
 # Time results in form of .tex table
 # result_tables_for_time(dataset_names, imbalance_ratios, sum_times, methods, experiment_name)
